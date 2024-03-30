@@ -21,7 +21,8 @@ APlayerShip::APlayerShip()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule Comp"));
-	RootComponent = CapsuleComp;
+	CapsuleComp->SetupAttachment(RootComponent);
+	CapsuleComp->SetCollisionProfileName(TEXT("Trigger"));
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base Mesh"));
 	Mesh->SetupAttachment(CapsuleComp);
@@ -33,7 +34,6 @@ APlayerShip::APlayerShip()
 	RightProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Right Projectile Spawn Point"));
 	RightProjectileSpawnPoint->SetupAttachment(Mesh);
-
 }
 
 // Called when the game starts or when spawned
@@ -55,6 +55,8 @@ void APlayerShip::BeginPlay()
 	Camera->SetActorRotation(FRotator(CameraAngle, StartDirection.Rotation().Yaw, StartDirection.Rotation().Roll));
 
 	CameraStartRotation = Camera->GetActorRotation();
+
+	CapsuleComp->OnComponentBeginOverlap.AddDynamic(this, &APlayerShip::OnOverlapBegin);
 }
 
 // Called every frame
@@ -82,35 +84,53 @@ void APlayerShip::Tick(float DeltaTime)
 
 	// Move based on input
 	
-	if (bIsMoving)
+	if (bIsMoving && !bFreezeMovement)
 	{
-		VelocityVector += InputMovementAcceleration * MoveDirection;
-		if (VelocityVector.Length() > InputMovementMaxSpeed)
+		
+		if (VelocityVector.Length() + InputMovementAcceleration > InputMovementMaxSpeed)
 		{
-			VelocityVector = VelocityVector.GetSafeNormal() * InputMovementMaxSpeed;
+			VelocityVector = FMath::VInterpTo(VelocityVector, MoveDirection * InputMovementMaxSpeed, DeltaTime, InterpSpeed);
+		}
+		else
+		{
+			VelocityVector += InputMovementAcceleration * MoveDirection;
 		}
 
-		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), CameraInterpSpeed));
+		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
 
 	}
-	if (!bIsMoving)
+	if (!bIsMoving && !bFreezeMovement)
 	{
-		// Input movement deceleration
-		if (VelocityVector.Length() > 0)
-		{
-			VelocityVector *= (VelocityVector.Length() - InputMovementDeceleration) / VelocityVector.Length();
-		}
-
 		if (FVector::DotProduct(VelocityVector, MoveDirection) < 0)
 		{
 			VelocityVector = FVector(0.f);
 			MoveDirection = FVector(0.f);
 		}
-
-		// Rotate camera to start
-		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation, UGameplayStatics::GetWorldDeltaSeconds(this), CameraInterpSpeed));
 	}
+	if (!bIsMoving)
+	{
+		// Deceleration
+		float Deceleration = InputMovementDeceleration;;
+		if (bFreezeMovement)
+		{
+			Deceleration = KnockbackDeceleration;
+		}
 
+		if (VelocityVector.Length() - Deceleration > 0)
+		{
+
+			VelocityVector *= (VelocityVector.Length() - Deceleration) / VelocityVector.Length();
+		}
+		else
+		{
+			VelocityVector = FMath::VInterpTo(VelocityVector, FVector::ZeroVector, DeltaTime, InterpSpeed);
+		}
+
+		// Rotate camera to start rotation
+		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
+	}
+	
+	// Set location to velocity
 	SetActorLocation(GetActorLocation() + VelocityVector * DeltaTime, true);
 
 	// If player ship is past max distances, we set it's position to those distances
@@ -160,13 +180,20 @@ void APlayerShip::Tick(float DeltaTime)
 		SetActorLocation(ForwardLocation + UpwardLocation + RightwardLocation);
 	}
 
-	// Set mesh rotation
-	FRotator NewMeshRotation = FRotator(0.f, 0.f, 0.f);
-	NewMeshRotation.Yaw = (FVector::DotProduct(VelocityVector, GetActorRightVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle;
-	NewMeshRotation.Roll = (FVector::DotProduct(VelocityVector, GetActorRightVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle * MeshRollMovementScale;
-	NewMeshRotation.Pitch = (FVector::DotProduct(VelocityVector, GetActorUpVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle;
-	Mesh->SetRelativeRotation(NewMeshRotation);
-
+	if (!bFreezeMovement)
+	{
+		// Set mesh rotation
+		FRotator NewMeshRotation = FRotator(0.f, 0.f, 0.f);
+		NewMeshRotation.Yaw = (FVector::DotProduct(VelocityVector, GetActorRightVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle;
+		NewMeshRotation.Roll = (FVector::DotProduct(VelocityVector, GetActorRightVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle * MeshRollMovementScale;
+		NewMeshRotation.Pitch = (FVector::DotProduct(VelocityVector, GetActorUpVector()) / InputMovementMaxSpeed) * MaxMovementRotationAngle;
+		Mesh->SetRelativeRotation(NewMeshRotation);
+	}
+	else
+	{
+		Mesh->SetRelativeRotation(FMath::RInterpTo(Mesh->GetRelativeRotation(), FRotator(0.f, 0.f, 0.f), DeltaTime, InterpSpeed));
+	}
+	
 	// Set camera position
 	// Move camera forward to where player ship is
 	FVector NewCameraLocation = StartLocation + GetActorLocation().ProjectOnTo(StartDirection);
@@ -253,9 +280,14 @@ void APlayerShip::Move(const FInputActionValue& Value)
 		return;
 	}
 
-	const FVector2D MoveValue = Value.Get<FVector2D>();
-
 	MoveDirection = FVector(0.f);
+
+	if (bFreezeMovement)
+	{
+		return;
+	}
+
+	const FVector2D MoveValue = Value.Get<FVector2D>();
 
 	// Right/Left direction
 	if (UKismetMathLibrary::Abs(MoveValue.X) > 0)
@@ -282,5 +314,20 @@ void APlayerShip::StoppedMovement(const FInputActionValue& Value)
 
 void APlayerShip::Fire(const FInputActionValue& Value)
 {
+}
+
+void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
+	// Send player in opposite direction at knockback speed
+	FVector MiddleOfScreen = StartLocation.ProjectOnTo(GetActorRightVector()) + StartLocation.ProjectOnTo(GetActorUpVector()) + GetActorLocation().ProjectOnTo(GetActorForwardVector());
+
+	// Knockback vector to middle of screen
+	FVector KnockbackVector = MiddleOfScreen - GetActorLocation();
+	SetActorLocation(GetActorLocation() + KnockbackVector.GetSafeNormal() * InstantKnockbackDistance);
+	VelocityVector = KnockbackVector.GetSafeNormal() * CollisionOverlapKnockbackSpeed;
+
+	bFreezeMovement = true;
+	bIsMoving = false;
 }
 

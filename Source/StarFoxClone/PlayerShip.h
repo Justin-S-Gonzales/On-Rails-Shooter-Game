@@ -83,7 +83,7 @@ private:
 	float CameraAngle = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CameraInterpSpeed = 10.f;
+	float InterpSpeed = 10.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	bool StartedCameraInterpToStart = false;
@@ -101,6 +101,18 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputMappingContext* PlayerInputMapping;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	float CollisionOverlapKnockbackSpeed = 20000.f;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	float InstantKnockbackDistance = 300.f;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	float KnockbackDeceleration = 100.f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	bool bFreezeMovement = false;
 
 public:
 	// Sets default values for this pawn's properties
@@ -120,4 +132,7 @@ public:
 	void Move(const FInputActionValue& Value);
 	void StoppedMovement(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
