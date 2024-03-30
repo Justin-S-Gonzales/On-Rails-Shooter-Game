@@ -169,7 +169,7 @@ void APlayerShip::Tick(float DeltaTime)
 
 	// Set camera position
 	// Move camera forward to where player ship is
-	FVector NewCameraLocation = StartLocation + (FVector::DotProduct(StartDirection, GetActorLocation())) * StartDirection;
+	FVector NewCameraLocation = StartLocation + GetActorLocation().ProjectOnTo(StartDirection);
 	// Move camera backward distance of camera distance
 	NewCameraLocation -= GetActorForwardVector() * CameraDistance;
 
