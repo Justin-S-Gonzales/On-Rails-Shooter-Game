@@ -52,7 +52,7 @@ void APlayerShip::BeginPlay()
 	StartDirection = GetActorForwardVector();
 
 	// Set camera rotation to start direction=
-	Camera->SetActorRotation(FRotator(CameraAngle, StartDirection.Rotation().Yaw, StartDirection.Rotation().Roll));
+	Camera->SetActorRotation(FRotator(StartDirection.Rotation().Pitch, StartDirection.Rotation().Yaw, StartDirection.Rotation().Roll));
 
 	CameraStartRotation = Camera->GetActorRotation();
 
@@ -96,7 +96,7 @@ void APlayerShip::Tick(float DeltaTime)
 			VelocityVector += InputMovementAcceleration * MoveDirection;
 		}
 
-		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
+		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation + Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
 
 	}
 	if (!bIsMoving && !bFreezeMovement)
@@ -196,7 +196,7 @@ void APlayerShip::Tick(float DeltaTime)
 	
 	// Set camera position
 	// Move camera forward to where player ship is
-	FVector NewCameraLocation = StartLocation + GetActorLocation().ProjectOnTo(StartDirection);
+	FVector NewCameraLocation = StartLocation + GetActorLocation().ProjectOnTo(GetActorForwardVector());
 	// Move camera backward distance of camera distance
 	NewCameraLocation -= GetActorForwardVector() * CameraDistance;
 
