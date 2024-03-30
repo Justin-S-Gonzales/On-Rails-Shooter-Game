@@ -90,14 +90,12 @@ void APlayerShip::Tick(float DeltaTime)
 			VelocityVector = VelocityVector.GetSafeNormal() * InputMovementMaxSpeed;
 		}
 
-		// Camera->SetActorRotation(Mesh->GetRelativeRotation() * CameraRotationScale);
 		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), CameraInterpSpeed));
 
 	}
 	if (!bIsMoving)
 	{
 		// Input movement deceleration
-		// CurrentInputMovementVelocity = FMath::Max(CurrentInputMovementVelocity - InputMovementStopSpeed, 0.f);
 		if (VelocityVector.Length() > 0)
 		{
 			VelocityVector *= (VelocityVector.Length() - InputMovementDeceleration) / VelocityVector.Length();
@@ -130,11 +128,11 @@ void APlayerShip::Tick(float DeltaTime)
 		// Set actor forward, upward, and rightward location (is rightward even a word?)
 
 		// Actor forward location
-		FVector ForwardLocation = StartLocation + FVector::DotProduct(GetActorLocation() - StartLocation, StartDirection) * StartDirection;
+		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(StartDirection);
 		// Actor upward location
 		FVector UpwardLocation = GetActorUpVector() * MaxVerticalDistanceFromStart * Sign;
 		// Actor rightward location
-		FVector RightwardLocation = FVector::DotProduct(GetActorRightVector(), GetActorLocation() - StartLocation) * GetActorRightVector();
+		FVector RightwardLocation = (GetActorLocation() - StartLocation).ProjectOnTo(GetActorRightVector());
 
 		SetActorLocation(ForwardLocation + UpwardLocation + RightwardLocation);
 	}
@@ -153,9 +151,9 @@ void APlayerShip::Tick(float DeltaTime)
 		// Set actor forward, upward, and rightward location (is rightward even a word?)
 
 		// Actor forward location
-		FVector ForwardLocation = StartLocation + FVector::DotProduct(GetActorLocation() - StartLocation, StartDirection) * StartDirection;
+		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(StartDirection);
 		// Actor upward location
-		FVector UpwardLocation = FVector::DotProduct(GetActorUpVector(), GetActorLocation() - StartLocation) * GetActorUpVector();
+		FVector UpwardLocation = (GetActorLocation() - StartLocation).ProjectOnTo(GetActorUpVector());
 		// Actor righward location
 		FVector RightwardLocation = GetActorRightVector() * MaxHorizontalDistanceFromStart * Sign;
 
@@ -178,9 +176,9 @@ void APlayerShip::Tick(float DeltaTime)
 	// We can use the dot product to determine the distance the ship has traveled along the right and up vectors from the start both positively and negatively
 
 	// Move camera right or left
-	NewCameraLocation += GetActorRightVector() * FVector::DotProduct((GetActorLocation() - StartLocation), GetActorRightVector()) * CameraMovementScale;
+	NewCameraLocation += (GetActorLocation() - StartLocation).ProjectOnTo(GetActorRightVector()) * CameraMovementScale;
 	// Move camera up or down
-	NewCameraLocation += GetActorUpVector() * FVector::DotProduct((GetActorLocation() - StartLocation), GetActorUpVector()) * CameraMovementScale + GetActorUpVector() * CameraHeight;
+	NewCameraLocation += (GetActorLocation() - StartLocation).ProjectOnTo(GetActorUpVector()) * CameraMovementScale + GetActorUpVector() * CameraHeight;
 
 	Camera->SetActorLocation(NewCameraLocation);
 }
@@ -248,8 +246,6 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void APlayerShip::Move(const FInputActionValue& Value)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("Moved"));
-
 	if (!GetController())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No controller"));
@@ -286,6 +282,5 @@ void APlayerShip::StoppedMovement(const FInputActionValue& Value)
 
 void APlayerShip::Fire(const FInputActionValue& Value)
 {
-	// UE_LOG(LogTemp, Warning, TEXT("Fired"));
 }
 
