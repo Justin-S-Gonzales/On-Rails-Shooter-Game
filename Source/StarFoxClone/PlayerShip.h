@@ -12,6 +12,7 @@ class ACameraActor;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
+struct FTimerHandle;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -70,17 +71,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float CameraDistance = 1000.f;
 
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	FVector StartLocation = FVector(0.f);
-	FVector StartDirection = FVector(0.f);
-
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CameraHeight = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float CameraMovementScale = 0.75f;
-
-	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CameraAngle = 0.f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float InterpSpeed = 10.f;
@@ -114,6 +109,10 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 	bool bFreezeMovement = false;
 
+	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	float FreezeTime = 1.0f;
+
+	FTimerHandle FreezeTimerHandle;
 public:
 	// Sets default values for this pawn's properties
 	APlayerShip();
@@ -131,6 +130,7 @@ public:
 
 	void Move(const FInputActionValue& Value);
 	void StoppedMovement(const FInputActionValue& Value);
+	void UnFreezeMovement();
 	void Fire(const FInputActionValue& Value);
 
 	UFUNCTION()

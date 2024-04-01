@@ -13,6 +13,7 @@
 #include "InputActionValue.h"
 
 #include "Kismet/KismetMathLibrary.h"
+#include "TimerManager.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -49,10 +50,9 @@ void APlayerShip::BeginPlay()
 	}
 
 	StartLocation = GetActorLocation();
-	StartDirection = GetActorForwardVector();
 
-	// Set camera rotation to start direction=
-	Camera->SetActorRotation(FRotator(StartDirection.Rotation().Pitch, StartDirection.Rotation().Yaw, StartDirection.Rotation().Roll));
+	// Set camera rotation to start direction
+	Camera->SetActorRotation(GetActorRotation());
 
 	CameraStartRotation = Camera->GetActorRotation();
 
@@ -82,30 +82,12 @@ void APlayerShip::Tick(float DeltaTime)
 	FVector DeltaVector = GetActorForwardVector() * ForwardMovementSpeed * DeltaTime;
 	SetActorLocation(GetActorLocation() + DeltaVector, true);
 
-	// Move based on input
-	
 	if (bIsMoving && !bFreezeMovement)
 	{
 		
-		if (VelocityVector.Length() + InputMovementAcceleration > InputMovementMaxSpeed)
-		{
-			VelocityVector = FMath::VInterpTo(VelocityVector, MoveDirection * InputMovementMaxSpeed, DeltaTime, InterpSpeed);
-		}
-		else
-		{
-			VelocityVector += InputMovementAcceleration * MoveDirection;
-		}
-
+		VelocityVector = FMath::VInterpTo(VelocityVector, MoveDirection * InputMovementMaxSpeed, DeltaTime, InterpSpeed);
+		
 		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation + Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
-
-	}
-	if (!bIsMoving && !bFreezeMovement)
-	{
-		if (FVector::DotProduct(VelocityVector, MoveDirection) < 0)
-		{
-			VelocityVector = FVector(0.f);
-			MoveDirection = FVector(0.f);
-		}
 	}
 	if (!bIsMoving)
 	{
@@ -123,11 +105,18 @@ void APlayerShip::Tick(float DeltaTime)
 		}
 		else
 		{
-			VelocityVector = FMath::VInterpTo(VelocityVector, FVector::ZeroVector, DeltaTime, InterpSpeed);
+			VelocityVector = FVector::ZeroVector;
 		}
 
 		// Rotate camera to start rotation
-		Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
+		if (Mesh->GetRelativeRotation() == FRotator(0.f))
+		{
+			Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
+		}
+		else
+		{
+			Camera->SetActorRotation(FMath::RInterpTo(Camera->GetActorRotation(), CameraStartRotation + Mesh->GetRelativeRotation() * CameraRotationScale, UGameplayStatics::GetWorldDeltaSeconds(this), InterpSpeed));
+		}
 	}
 	
 	// Set location to velocity
@@ -148,7 +137,7 @@ void APlayerShip::Tick(float DeltaTime)
 		// Set actor forward, upward, and rightward location (is rightward even a word?)
 
 		// Actor forward location
-		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(StartDirection);
+		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(GetActorForwardVector());
 		// Actor upward location
 		FVector UpwardLocation = GetActorUpVector() * MaxVerticalDistanceFromStart * Sign;
 		// Actor rightward location
@@ -171,7 +160,7 @@ void APlayerShip::Tick(float DeltaTime)
 		// Set actor forward, upward, and rightward location (is rightward even a word?)
 
 		// Actor forward location
-		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(StartDirection);
+		FVector ForwardLocation = StartLocation + (GetActorLocation() - StartLocation).ProjectOnTo(GetActorForwardVector());
 		// Actor upward location
 		FVector UpwardLocation = (GetActorLocation() - StartLocation).ProjectOnTo(GetActorUpVector());
 		// Actor righward location
@@ -196,7 +185,7 @@ void APlayerShip::Tick(float DeltaTime)
 	
 	// Set camera position
 	// Move camera forward to where player ship is
-	FVector NewCameraLocation = StartLocation + GetActorLocation().ProjectOnTo(GetActorForwardVector());
+	FVector NewCameraLocation = StartLocation.ProjectOnTo(GetActorRightVector()) + (GetActorLocation()).ProjectOnTo(GetActorForwardVector());
 	// Move camera backward distance of camera distance
 	NewCameraLocation -= GetActorForwardVector() * CameraDistance;
 
@@ -205,7 +194,7 @@ void APlayerShip::Tick(float DeltaTime)
 	// Move camera right or left
 	NewCameraLocation += (GetActorLocation() - StartLocation).ProjectOnTo(GetActorRightVector()) * CameraMovementScale;
 	// Move camera up or down
-	NewCameraLocation += (GetActorLocation() - StartLocation).ProjectOnTo(GetActorUpVector()) * CameraMovementScale + GetActorUpVector() * CameraHeight;
+	NewCameraLocation += StartLocation.ProjectOnTo(GetActorUpVector()) + (GetActorLocation() - StartLocation).ProjectOnTo(GetActorUpVector()) * CameraMovementScale;
 
 	Camera->SetActorLocation(NewCameraLocation);
 }
@@ -301,8 +290,7 @@ void APlayerShip::Move(const FInputActionValue& Value)
 		MoveDirection += GetActorUpVector() * MoveValue.Y;
 	}
 
-	// Acceleration
-	MoveDirection = MoveDirection.GetSafeNormal();
+	// MoveDirection = MoveValue.X + MoveValue.Y / 
 
 	bIsMoving = true;
 }
@@ -310,6 +298,12 @@ void APlayerShip::Move(const FInputActionValue& Value)
 void APlayerShip::StoppedMovement(const FInputActionValue& Value)
 {
 	bIsMoving = false;
+}
+
+void APlayerShip::UnFreezeMovement()
+{
+	bFreezeMovement = false;
+	UE_LOG(LogTemp, Warning, TEXT("Called UnFreezeMovement"));
 }
 
 void APlayerShip::Fire(const FInputActionValue& Value)
@@ -329,5 +323,8 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 
 	bFreezeMovement = true;
 	bIsMoving = false;
+
+	// Set freeze timer
+	GetWorldTimerManager().SetTimer(FreezeTimerHandle, this, &APlayerShip::UnFreezeMovement, FreezeTime / 2.0f, false, FreezeTime / 2.0f);
 }
 
