@@ -14,6 +14,7 @@ class UInputMappingContext;
 struct FInputActionValue;
 struct FTimerHandle;
 class UHitFlash;
+class UHealthComponent;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -35,6 +36,9 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	UHitFlash* HitFlashComp;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
+	UHealthComponent* HealthComp;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	float ForwardMovementSpeed = 2000.f;

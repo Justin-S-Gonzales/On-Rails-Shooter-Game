@@ -17,6 +17,7 @@
 #include "Camera/CameraShakeBase.h"
 #include "Engine/DamageEvents.h"
 #include "HitFlash.h"
+#include "HealthComponent.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -40,6 +41,8 @@ APlayerShip::APlayerShip()
 	RightProjectileSpawnPoint->SetupAttachment(Mesh);
 
 	HitFlashComp = CreateDefaultSubobject<UHitFlash>(TEXT("Hit Flash"));
+
+	HealthComp = CreateDefaultSubobject<UHealthComponent>(TEXT("Health"));
 }
 
 // Called when the game starts or when spawned
@@ -342,7 +345,7 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraShake(CollisionCameraShakeClass);
 
 	FDamageEvent damageEvent;
-	TakeDamage(2.f, damageEvent, nullptr, OtherActor);
+	TakeDamage(10.f, damageEvent, nullptr, OtherActor);
 }
 
 float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
