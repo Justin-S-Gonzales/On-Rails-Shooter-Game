@@ -13,6 +13,7 @@ class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
 struct FTimerHandle;
+class UHitFlash;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -32,17 +33,17 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	USceneComponent* RightProjectileSpawnPoint;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float ForwardMovementSpeed = 1000.f;
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
+	UHitFlash* HitFlashComp;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	float InputMovementMaxSpeed = 6000.f;
+	float ForwardMovementSpeed = 2000.f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	float InputMovementAcceleration = 600.f;
+	float InputMovementMaxSpeed = 3500.f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	float InputMovementDeceleration = 200.f;
+	float InputMovementDeceleration = 85.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Movement")
 	bool bIsMoving = false;
@@ -88,6 +89,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	float CameraRotationScale = 0.1f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	TSubclassOf<class UCameraShakeBase> CollisionCameraShakeClass;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InputMove;
 
@@ -109,7 +113,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 	bool bFreezeMovement = false;
 
-	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	UPROPERTY(EditAnywhere, Category = "Collision")
 	float FreezeTime = 1.0f;
 
 	FTimerHandle FreezeTimerHandle;
@@ -135,4 +139,6 @@ public:
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser);
 };

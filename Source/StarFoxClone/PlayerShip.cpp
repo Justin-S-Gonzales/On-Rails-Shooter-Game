@@ -14,6 +14,9 @@
 
 #include "Kismet/KismetMathLibrary.h"
 #include "TimerManager.h"
+#include "Camera/CameraShakeBase.h"
+#include "Engine/DamageEvents.h"
+#include "HitFlash.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -22,7 +25,7 @@ APlayerShip::APlayerShip()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule Comp"));
-	CapsuleComp->SetupAttachment(RootComponent);
+	RootComponent = CapsuleComp;
 	CapsuleComp->SetCollisionProfileName(TEXT("Trigger"));
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base Mesh"));
@@ -35,6 +38,8 @@ APlayerShip::APlayerShip()
 	RightProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Right Projectile Spawn Point"));
 	RightProjectileSpawnPoint->SetupAttachment(Mesh);
+
+	HitFlashComp = CreateDefaultSubobject<UHitFlash>(TEXT("Hit Flash"));
 }
 
 // Called when the game starts or when spawned
@@ -326,5 +331,26 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 
 	// Set freeze timer
 	GetWorldTimerManager().SetTimer(FreezeTimerHandle, this, &APlayerShip::UnFreezeMovement, FreezeTime / 2.0f, false, FreezeTime / 2.0f);
+
+	// Shake camera
+	if (CollisionCameraShakeClass == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No camera shake class!"));
+		return;
+	}
+
+	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraShake(CollisionCameraShakeClass);
+
+	FDamageEvent damageEvent;
+	TakeDamage(2.f, damageEvent, nullptr, OtherActor);
+}
+
+float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	UE_LOG(LogTemp, Warning, TEXT("Took Damage"));
+
+	return 0.0f;
 }
 
