@@ -26,12 +26,12 @@ APlayerShip::APlayerShip()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	CapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Capsule Comp"));
-	RootComponent = CapsuleComp;
-	CapsuleComp->SetCollisionProfileName(TEXT("Trigger"));
+	TriggerCapsuleComp = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Trigger Capsule Comp"));
+	TriggerCapsuleComp->SetCollisionProfileName(TEXT("Trigger"));
+	RootComponent = TriggerCapsuleComp;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base Mesh"));
-	Mesh->SetupAttachment(CapsuleComp);
+	Mesh->SetupAttachment(TriggerCapsuleComp);
 
 	LeftProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Left Projectile Spawn Point"));
@@ -65,7 +65,7 @@ void APlayerShip::BeginPlay()
 
 	CameraStartRotation = Camera->GetActorRotation();
 
-	CapsuleComp->OnComponentBeginOverlap.AddDynamic(this, &APlayerShip::OnOverlapBegin);
+	TriggerCapsuleComp->OnComponentBeginOverlap.AddDynamic(this, &APlayerShip::OnOverlapBegin);
 }
 
 // Called every frame
@@ -315,6 +315,11 @@ void APlayerShip::UnFreezeMovement()
 	UE_LOG(LogTemp, Warning, TEXT("Called UnFreezeMovement"));
 }
 
+void APlayerShip::SetInvincibilityToFalse()
+{
+	bIsInvincible = false;
+}
+
 void APlayerShip::Fire(const FInputActionValue& Value)
 {
 }
@@ -348,7 +353,6 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 
 	// Knockback vector to middle of screen
 	FVector KnockbackVector = MiddleOfScreen - GetActorLocation();
-	SetActorLocation(GetActorLocation() + KnockbackVector.GetSafeNormal() * InstantKnockbackDistance);
 	VelocityVector = KnockbackVector.GetSafeNormal() * CollisionOverlapKnockbackSpeed;
 
 	bFreezeMovement = true;
@@ -366,8 +370,19 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 
 	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraShake(CollisionCameraShakeClass);
 
+	// If invincible, we stop here
+	if (bIsInvincible)
+	{
+		return;
+	}
+
 	FDamageEvent damageEvent;
-	TakeDamage(50.f, damageEvent, nullptr, OtherActor);
+	TakeDamage(CollisionOverlapDamage, damageEvent, nullptr, OtherActor);
+
+	// Set invincibility to true
+	bIsInvincible = true;
+
+	GetWorldTimerManager().SetTimer(InvincibleTimerHandle, this, &APlayerShip::SetInvincibilityToFalse, CollisionInvincibilityTime / 2.0f, false, CollisionInvincibilityTime / 2.0f);
 }
 
 float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

@@ -23,7 +23,7 @@ class STARFOXCLONE_API APlayerShip : public APawn
 
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	UCapsuleComponent* CapsuleComp;
+	UCapsuleComponent* TriggerCapsuleComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	UStaticMeshComponent* Mesh;
@@ -109,10 +109,10 @@ private:
 	float CollisionOverlapKnockbackSpeed = 20000.f;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
-	float InstantKnockbackDistance = 300.f;
+	float KnockbackDeceleration = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
-	float KnockbackDeceleration = 100.f;
+	float CollisionOverlapDamage = 20.0f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 	bool bFreezeMovement = false;
@@ -120,13 +120,21 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	float FreezeTime = 1.0f;
 
+	FTimerHandle FreezeTimerHandle;
+
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	class UParticleSystem* DeathParticles;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	FVector DeathParticlesScale = FVector(5.f);
 
-	FTimerHandle FreezeTimerHandle;
+	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	bool bIsInvincible = false;
+
+	float CollisionInvincibilityTime = 3.0f;
+
+	FTimerHandle InvincibleTimerHandle;
+
 public:
 	// Sets default values for this pawn's properties
 	APlayerShip();
@@ -143,9 +151,10 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Move(const FInputActionValue& Value);
+	void Fire(const FInputActionValue& Value);
 	void StoppedMovement(const FInputActionValue& Value);
 	void UnFreezeMovement();
-	void Fire(const FInputActionValue& Value);
+	void SetInvincibilityToFalse();
 	void Die();
 
 	UFUNCTION()
