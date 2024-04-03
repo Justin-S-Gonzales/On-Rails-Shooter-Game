@@ -2,4 +2,13 @@
 
 
 #include "GM_StarFoxCloneGameMode.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerShip.h"
 
+void AGM_StarFoxCloneGameMode::ActorDied(AActor* DeadActor)
+{
+	if (DeadActor == UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		Cast<APlayerShip>(DeadActor)->Die();
+	}
+}

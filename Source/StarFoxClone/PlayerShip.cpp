@@ -18,6 +18,7 @@
 #include "Engine/DamageEvents.h"
 #include "HitFlash.h"
 #include "HealthComponent.h"
+#include "Particles/ParticleSystem.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -318,6 +319,27 @@ void APlayerShip::Fire(const FInputActionValue& Value)
 {
 }
 
+void APlayerShip::Die()
+{
+	UE_LOG(LogTemp, Warning, TEXT("died"));
+
+	if (DeathParticles == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No death particles!"));
+		return;
+	}
+	
+	UGameplayStatics::SpawnEmitterAtLocation(
+		this,
+		DeathParticles,
+		GetActorLocation(),
+		GetActorRotation(),
+		DeathParticlesScale
+	);
+
+	Destroy();
+}
+
 void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
@@ -345,7 +367,7 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 	UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraShake(CollisionCameraShakeClass);
 
 	FDamageEvent damageEvent;
-	TakeDamage(10.f, damageEvent, nullptr, OtherActor);
+	TakeDamage(50.f, damageEvent, nullptr, OtherActor);
 }
 
 float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)

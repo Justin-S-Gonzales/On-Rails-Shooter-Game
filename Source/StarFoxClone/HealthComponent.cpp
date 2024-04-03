@@ -2,6 +2,8 @@
 
 
 #include "HealthComponent.h"
+#include "GM_StarFoxCloneGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
@@ -11,7 +13,12 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 
 	if (CurrentHealth <= 0.f)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("dead"));
+		AGM_StarFoxCloneGameMode* StarFoxCloneGameMode = Cast<AGM_StarFoxCloneGameMode>(UGameplayStatics::GetGameMode(this));
+		
+		if (!StarFoxCloneGameMode)
+			return;
+
+		StarFoxCloneGameMode->ActorDied(GetOwner());
 
 		return;
 	}

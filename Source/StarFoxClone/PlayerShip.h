@@ -120,6 +120,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	float FreezeTime = 1.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	class UParticleSystem* DeathParticles;
+
+	UPROPERTY(EditAnywhere, Category = "Collision")
+	FVector DeathParticlesScale = FVector(5.f);
+
 	FTimerHandle FreezeTimerHandle;
 public:
 	// Sets default values for this pawn's properties
@@ -140,6 +146,7 @@ public:
 	void StoppedMovement(const FInputActionValue& Value);
 	void UnFreezeMovement();
 	void Fire(const FInputActionValue& Value);
+	void Die();
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

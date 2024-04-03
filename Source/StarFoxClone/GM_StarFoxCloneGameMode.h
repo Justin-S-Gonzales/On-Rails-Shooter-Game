@@ -14,4 +14,7 @@ class STARFOXCLONE_API AGM_StarFoxCloneGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+
+	void ActorDied(AActor* DeadActor);
 };
