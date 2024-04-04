@@ -268,6 +268,13 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		this,
 		&APlayerShip::Fire
 	);
+
+	PlayerEnhancedInput->BindAction(
+		InputFire,
+		ETriggerEvent::Completed,
+		this,
+		&APlayerShip::ResetFireability
+	);
 }
 
 void APlayerShip::Move(const FInputActionValue& Value)
@@ -338,10 +345,7 @@ void APlayerShip::Fire(const FInputActionValue& Value)
 
 	AProjectile* LeftProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, LeftProjectileSpawnPoint->GetComponentLocation(), LeftProjectileSpawnPoint->GetComponentRotation());
 
-	// To start lasers in sync, we start a timer for next tick
-	
 	bCanFire = false;
-	GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerShip::ResetFireability, FireRate / 2.0f, false, FireRate / 2.0f);
 }
 
 void APlayerShip::Die()

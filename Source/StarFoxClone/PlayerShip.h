@@ -140,7 +140,7 @@ private:
 	TSubclassOf<AProjectile> ProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
-	float FireRate = 0.5f;
+	float FireRate = 0.05f;
 
 	bool bCanFire = true;
 

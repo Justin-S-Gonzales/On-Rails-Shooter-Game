@@ -7,6 +7,7 @@
 #include "Projectile.generated.h"
 
 class UCapsuleComponent;
+class UParticleSystem;
 
 UCLASS()
 class STARFOXCLONE_API AProjectile : public AActor
@@ -15,16 +16,24 @@ class STARFOXCLONE_API AProjectile : public AActor
 	
 private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
-	UCapsuleComponent* CapsuleComp;
+	UCapsuleComponent* TriggerCapsuleComp;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	UStaticMeshComponent* Mesh;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	float Speed = 8000.f;
+	float Speed = 30000.0f;
+
+	FVector StartLocation = FVector(0.f);
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	bool bMove = true;
+	float MaxDistance = 10000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UParticleSystem* ImpactParticles;
+
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	FVector ImpactParticlesScale = FVector(3.0f);
 
 public:	
 	// Sets default values for this actor's properties
@@ -38,5 +47,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void SetMove(bool move) { bMove = move; };
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
