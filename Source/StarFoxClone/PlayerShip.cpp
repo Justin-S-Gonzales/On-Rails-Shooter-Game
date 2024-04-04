@@ -19,6 +19,7 @@
 #include "HitFlash.h"
 #include "HealthComponent.h"
 #include "Particles/ParticleSystem.h"
+#include "Projectile.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -320,8 +321,42 @@ void APlayerShip::SetInvincibilityToFalse()
 	bIsInvincible = false;
 }
 
+void APlayerShip::ResetFireability()
+{
+	bCanFire = true;
+}
+
 void APlayerShip::Fire(const FInputActionValue& Value)
 {
+	if (!bCanFire)
+	{
+		return;
+	}
+
+	// Spawn lasers
+	AProjectile* RightProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, RightProjectileSpawnPoint->GetComponentLocation(), RightProjectileSpawnPoint->GetComponentRotation());
+
+	AProjectile* LeftProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, LeftProjectileSpawnPoint->GetComponentLocation(), LeftProjectileSpawnPoint->GetComponentRotation());
+
+	// To start lasers in sync, we start a timer for next tick
+	FTimerDelegate LeftLaserStartMovementTimerDelegate = FTimerDelegate::CreateUObject(
+		LeftProjectile,
+		&AProjectile::SetMove,
+		true
+	);
+
+	GetWorldTimerManager().SetTimerForNextTick(LeftLaserStartMovementTimerDelegate);
+
+	FTimerDelegate RightLaserStartMovementTimerDelegate = FTimerDelegate::CreateUObject(
+		RightProjectile,
+		&AProjectile::SetMove,
+		true
+	);
+
+	GetWorldTimerManager().SetTimerForNextTick(RightLaserStartMovementTimerDelegate);
+
+	bCanFire = false;
+	GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerShip::ResetFireability, FireRate / 2.0f, false, FireRate / 2.0f);
 }
 
 void APlayerShip::Die()

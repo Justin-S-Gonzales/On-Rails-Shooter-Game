@@ -15,6 +15,7 @@ struct FInputActionValue;
 struct FTimerHandle;
 class UHitFlash;
 class UHealthComponent;
+class AProjectile;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -135,6 +136,16 @@ private:
 
 	FTimerHandle InvincibleTimerHandle;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	TSubclassOf<AProjectile> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float FireRate = 0.5f;
+
+	bool bCanFire = true;
+
+	FTimerHandle FireRateTimerHandle;
+
 public:
 	// Sets default values for this pawn's properties
 	APlayerShip();
@@ -155,6 +166,7 @@ public:
 	void StoppedMovement(const FInputActionValue& Value);
 	void UnFreezeMovement();
 	void SetInvincibilityToFalse();
+	void ResetFireability();
 	void Die();
 
 	UFUNCTION()
