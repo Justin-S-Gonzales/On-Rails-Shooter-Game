@@ -339,22 +339,7 @@ void APlayerShip::Fire(const FInputActionValue& Value)
 	AProjectile* LeftProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, LeftProjectileSpawnPoint->GetComponentLocation(), LeftProjectileSpawnPoint->GetComponentRotation());
 
 	// To start lasers in sync, we start a timer for next tick
-	FTimerDelegate LeftLaserStartMovementTimerDelegate = FTimerDelegate::CreateUObject(
-		LeftProjectile,
-		&AProjectile::SetMove,
-		true
-	);
-
-	GetWorldTimerManager().SetTimerForNextTick(LeftLaserStartMovementTimerDelegate);
-
-	FTimerDelegate RightLaserStartMovementTimerDelegate = FTimerDelegate::CreateUObject(
-		RightProjectile,
-		&AProjectile::SetMove,
-		true
-	);
-
-	GetWorldTimerManager().SetTimerForNextTick(RightLaserStartMovementTimerDelegate);
-
+	
 	bCanFire = false;
 	GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerShip::ResetFireability, FireRate / 2.0f, false, FireRate / 2.0f);
 }

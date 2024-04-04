@@ -24,7 +24,7 @@ private:
 	float Speed = 8000.f;
 
 	UPROPERTY(EditAnywhere, Category = "Movement")
-	bool bMove = false;
+	bool bMove = true;
 
 public:	
 	// Sets default values for this actor's properties
