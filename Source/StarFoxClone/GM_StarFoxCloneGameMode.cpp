@@ -4,11 +4,17 @@
 #include "GM_StarFoxCloneGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerShip.h"
+#include "BaseEnemy.h"
 
 void AGM_StarFoxCloneGameMode::ActorDied(AActor* DeadActor)
 {
-	if (DeadActor == UGameplayStatics::GetPlayerPawn(this, 0))
+	if (APlayerShip* Player = Cast<APlayerShip>(DeadActor))
 	{
-		Cast<APlayerShip>(DeadActor)->Die();
+		Player->Die();
+	}
+
+	if (ABaseEnemy* Enemy = Cast<ABaseEnemy>(DeadActor))
+	{
+		Enemy->Die();
 	}
 }

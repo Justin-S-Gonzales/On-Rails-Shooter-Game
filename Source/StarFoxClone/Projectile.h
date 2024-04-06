@@ -35,6 +35,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Effects")
 	FVector ImpactParticlesScale = FVector(3.0f);
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float Damage = 10.0f;
+
 public:	
 	// Sets default values for this actor's properties
 	AProjectile();
@@ -49,4 +52,6 @@ public:
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void SetDamage(float damage) { Damage = damage; }
 };

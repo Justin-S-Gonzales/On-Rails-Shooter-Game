@@ -65,6 +65,8 @@ void AProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 		ImpactParticlesScale
 	);
 
+	UGameplayStatics::ApplyDamage(OtherActor, Damage, nullptr, this, nullptr);
+
 	Destroy();
 }
 

@@ -31,7 +31,7 @@ APlayerShip::APlayerShip()
 	TriggerCapsuleComp->SetCollisionProfileName(TEXT("Trigger"));
 	RootComponent = TriggerCapsuleComp;
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Base Mesh"));
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(TriggerCapsuleComp);
 
 	LeftProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(
@@ -413,7 +413,7 @@ float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	UE_LOG(LogTemp, Warning, TEXT("Took Damage"));
+	UE_LOG(LogTemp, Warning, TEXT("Took Damage in player ship"));
 
 	return 0.0f;
 }

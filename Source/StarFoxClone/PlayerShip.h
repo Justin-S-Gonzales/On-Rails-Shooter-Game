@@ -16,6 +16,8 @@ struct FTimerHandle;
 class UHitFlash;
 class UHealthComponent;
 class AProjectile;
+class UParticleSystem;
+class UCameraShakeBase;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -95,7 +97,7 @@ private:
 	float CameraRotationScale = 0.1f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
-	TSubclassOf<class UCameraShakeBase> CollisionCameraShakeClass;
+	TSubclassOf<UCameraShakeBase> CollisionCameraShakeClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InputMove;
@@ -124,7 +126,7 @@ private:
 	FTimerHandle FreezeTimerHandle;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
-	class UParticleSystem* DeathParticles;
+	UParticleSystem* DeathParticles;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	FVector DeathParticlesScale = FVector(5.f);
@@ -138,9 +140,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<AProjectile> ProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float FireRate = 0.05f;
 
 	bool bCanFire = true;
 
