@@ -14,7 +14,7 @@ class STARFOXCLONE_API AProjectile : public AActor
 {
 	GENERATED_BODY()
 	
-private:
+protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	UCapsuleComponent* TriggerCapsuleComp;
 
@@ -51,7 +51,5 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	void SetDamage(float damage) { Damage = damage; }
+	virtual void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

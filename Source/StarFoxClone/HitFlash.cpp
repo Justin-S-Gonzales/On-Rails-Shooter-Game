@@ -3,6 +3,7 @@
 
 #include "HitFlash.h"
 #include "TimerManager.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UHitFlash::UHitFlash()
@@ -22,28 +23,36 @@ void UHitFlash::BeginPlay()
 
 	Owner = GetOwner();
 
-	if (Owner != nullptr)
+	if (!Owner)
 	{
-		Owner->OnTakeAnyDamage.AddDynamic(this, &UHitFlash::DamageFlash);
+		UE_LOG(LogTemp, Warning, TEXT("No Owner!"));
+		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
+		return;
 	}
+	
+		Owner->OnTakeAnyDamage.AddDynamic(this, &UHitFlash::DamageFlash);
 
-	UStaticMeshComponent* Mesh = Owner->GetComponentByClass <UStaticMeshComponent>();
+	TArray<UStaticMeshComponent*> Meshes;
+	Owner->GetComponents<UStaticMeshComponent*>(Meshes);
 
-	if (Mesh == nullptr)
+	if (Meshes.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No Mesh!"));
+		UE_LOG(LogTemp, Warning, TEXT("No Meshes!"));
 		return;
 	}
 
-	for (int i = 0; i < Mesh->GetMaterials().Num(); i++)
+	for (auto& Mesh : Meshes)
 	{
-		DynamicMaterialInstances.Add(Mesh->CreateDynamicMaterialInstance(i));
+		for (int i = 0; i < Mesh->GetMaterials().Num(); i++)
+		{
+			DynamicMaterialInstances.Add(Mesh->CreateDynamicMaterialInstance(i));
+		}
 	}
 }
 
 void UHitFlash::DamageFlash(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Took Damage in Hit Flash"));
+	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in Hit Flash"));
 
 	CurrentNumFlashesLeft = NumFlashes;
 

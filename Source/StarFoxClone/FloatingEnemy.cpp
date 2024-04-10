@@ -13,6 +13,8 @@ void AFloatingEnemy::Fire()
 
 AFloatingEnemy::AFloatingEnemy() : Super()
 {
+	ProjectileSpawnPoint1->SetupAttachment(RotateMesh);
+
 	ProjectileSpawnPoint2 = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Projectile Spawn Point 2"));
 	ProjectileSpawnPoint2->SetupAttachment(RotateMesh);
@@ -35,7 +37,12 @@ void AFloatingEnemy::Tick(float DeltaTime)
 		return;
 	}
 
-	FVector FromHereToPlayer = UGameplayStatics::GetPlayerPawn(this, 0)->GetActorLocation() - GetActorLocation();
+	FVector FromPlayerToHere = GetActorLocation() - UGameplayStatics::GetPlayerPawn(this, 0)->GetActorLocation();
+
+	if (FromHereToPlayer.Length() > AgroRange || FVector::DotProduct(FromPlayerToHere, UGameplayStatics::GetPlayerPawn(this, 0)->GetActorForwardVector()) < 0.f)
+	{
+		return;
+	}
 
 	FVector VelocityVector = FromHereToPlayer.GetSafeNormal() * MovementSpeed;
 

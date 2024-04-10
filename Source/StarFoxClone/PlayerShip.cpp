@@ -52,7 +52,7 @@ void APlayerShip::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (Camera == nullptr)
+	if (!Camera)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Camera!"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
@@ -74,14 +74,14 @@ void APlayerShip::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (Mesh == nullptr)
+	if (!Mesh)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Mesh!"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
 		return;
 	}
 	
-	if (Camera == nullptr)
+	if (!Camera)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Camera!"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
@@ -214,7 +214,7 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetController());
 
-	if (PlayerController == nullptr)
+	if (!PlayerController)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Player Controller!"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
@@ -226,16 +226,16 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 			PlayerController->GetLocalPlayer()
 		);
 
-	if (Subsystem == nullptr)
+	if (!Subsystem)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No subsystem"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
 		return;
 	}
 
-	if (InputMove == nullptr || InputFire == nullptr || PlayerInputMapping == nullptr)
+	if (!PlayerInputMapping || !InputMove || !InputFire || !InputBomb)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No input actions or mapping context!"));
+		UE_LOG(LogTemp, Warning, TEXT("Missing input actions or mapping context!"));
 		UKismetSystemLibrary::QuitGame(this, UGameplayStatics::GetPlayerController(this, 0), EQuitPreference::Quit, false);
 		return;
 	}
@@ -259,7 +259,7 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		InputMove,
 		ETriggerEvent::Completed,
 		this,
-		&APlayerShip::StoppedMovement
+		&APlayerShip::StopMovement
 	);
 
 	PlayerEnhancedInput->BindAction(
@@ -274,6 +274,20 @@ void APlayerShip::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 		ETriggerEvent::Completed,
 		this,
 		&APlayerShip::ResetFireability
+	);
+
+	PlayerEnhancedInput->BindAction(
+		InputBomb,
+		ETriggerEvent::Triggered,
+		this,
+		&APlayerShip::Bomb
+	);
+
+	PlayerEnhancedInput->BindAction(
+		InputBomb,
+		ETriggerEvent::Completed,
+		this,
+		&APlayerShip::ResetBombability
 	);
 }
 
@@ -312,7 +326,7 @@ void APlayerShip::Move(const FInputActionValue& Value)
 	bIsMoving = true;
 }
 
-void APlayerShip::StoppedMovement(const FInputActionValue& Value)
+void APlayerShip::StopMovement()
 {
 	bIsMoving = false;
 }
@@ -320,7 +334,7 @@ void APlayerShip::StoppedMovement(const FInputActionValue& Value)
 void APlayerShip::UnFreezeMovement()
 {
 	bFreezeMovement = false;
-	UE_LOG(LogTemp, Warning, TEXT("Called UnFreezeMovement"));
+	// UE_LOG(LogTemp, Warning, TEXT("Called UnFreezeMovement"));
 }
 
 void APlayerShip::SetInvincibilityToFalse()
@@ -346,13 +360,32 @@ void APlayerShip::Fire(const FInputActionValue& Value)
 	AProjectile* LeftProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, LeftProjectileSpawnPoint->GetComponentLocation(), LeftProjectileSpawnPoint->GetComponentRotation());
 
 	bCanFire = false;
+
+	GetWorldTimerManager().SetTimer(FireRateTimerHandle, this, &APlayerShip::ResetFireability, FireRate / 2.0f, false, FireRate / 2.0f);
+}
+
+void APlayerShip::Bomb(const FInputActionValue& Value)
+{
+	if (!bCanBomb)
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("bomb"));
+
+	bCanBomb = false;
+}
+
+void APlayerShip::ResetBombability()
+{
+	bCanBomb = true;
 }
 
 void APlayerShip::Die()
 {
-	UE_LOG(LogTemp, Warning, TEXT("died"));
+	// UE_LOG(LogTemp, Warning, TEXT("died"));
 
-	if (DeathParticles == nullptr)
+	if (!DeathParticles)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No death particles!"));
 		return;
@@ -371,7 +404,7 @@ void APlayerShip::Die()
 
 void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
+	// UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
 	// Send player in opposite direction at knockback speed
 	FVector MiddleOfScreen = StartLocation.ProjectOnTo(GetActorRightVector()) + StartLocation.ProjectOnTo(GetActorUpVector()) + GetActorLocation().ProjectOnTo(GetActorForwardVector());
 
@@ -386,7 +419,7 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 	GetWorldTimerManager().SetTimer(FreezeTimerHandle, this, &APlayerShip::UnFreezeMovement, FreezeTime / 2.0f, false, FreezeTime / 2.0f);
 
 	// Shake camera
-	if (CollisionCameraShakeClass == nullptr)
+	if (!CollisionCameraShakeClass)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No camera shake class!"));
 		return;
@@ -413,7 +446,7 @@ float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	UE_LOG(LogTemp, Warning, TEXT("Took Damage in player ship"));
+	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in player ship"));
 
 	return 0.0f;
 }

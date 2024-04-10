@@ -100,13 +100,16 @@ private:
 	TSubclassOf<UCameraShakeBase> CollisionCameraShakeClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputMappingContext* PlayerInputMapping;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InputMove;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	UInputAction* InputFire;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	UInputMappingContext* PlayerInputMapping;
+	UInputAction* InputBomb;
 
 	UPROPERTY(EditAnywhere, Category = "Collision")
 	float CollisionOverlapKnockbackSpeed = 20000.f;
@@ -141,7 +144,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<AProjectile> ProjectileClass;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float FireRate = 0.4f;
+
 	bool bCanFire = true;
+
+	bool bCanBomb = true;
 
 	FTimerHandle FireRateTimerHandle;
 
@@ -160,12 +168,16 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// Input action bindings
 	void Move(const FInputActionValue& Value);
+	void StopMovement();
 	void Fire(const FInputActionValue& Value);
-	void StoppedMovement(const FInputActionValue& Value);
+	void ResetFireability();
+	void Bomb(const FInputActionValue& Value);
+	void ResetBombability();
+
 	void UnFreezeMovement();
 	void SetInvincibilityToFalse();
-	void ResetFireability();
 	void Die();
 
 	UFUNCTION()

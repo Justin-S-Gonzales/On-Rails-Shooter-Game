@@ -7,7 +7,7 @@
 
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Took Damage in Health Component"));
+	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in Health Component"));
 
 	CurrentHealth -= Damage;
 

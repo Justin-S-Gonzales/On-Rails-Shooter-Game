@@ -48,6 +48,11 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float FireRate = 1.f;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float AgroRange = 20000.f;
+
+	FVector FromHereToPlayer = FVector(0.f);
+
 	virtual void Fire();
 
 public:	

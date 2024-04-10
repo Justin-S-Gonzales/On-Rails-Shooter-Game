@@ -29,7 +29,6 @@ ABaseEnemy::ABaseEnemy()
 
 	ProjectileSpawnPoint1 = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Projectile Spawn Point 1"));
-	ProjectileSpawnPoint1->SetupAttachment(RotateMesh);
 
 	HitFlashComp = CreateDefaultSubobject<UHitFlash>(TEXT("Hit Flash"));
 
@@ -48,13 +47,27 @@ void ABaseEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!UGameplayStatics::GetPlayerPawn(this, 0))
+	{
+		return;
+	}
+
+	FromHereToPlayer = UGameplayStatics::GetPlayerPawn(this, 0)->GetActorLocation() - GetActorLocation();
+
+	if (FromHereToPlayer.Length() > AgroRange || FVector::DotProduct(FromHereToPlayer, UGameplayStatics::GetPlayerPawn(this, 0)->GetActorForwardVector()) > 0.f)
+	{
+		GetWorldTimerManager().PauseTimer(ShootingTimer);
+		return;
+	}
+
+	GetWorldTimerManager().UnPauseTimer(ShootingTimer);
 }
 
 void ABaseEnemy::Die()
 {
-	UE_LOG(LogTemp, Warning, TEXT("died"));
+	// UE_LOG(LogTemp, Warning, TEXT("died"));
 
-	if (DeathParticles == nullptr)
+	if (!DeathParticles)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No death particles!"));
 		return;
@@ -75,7 +88,7 @@ float ABaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	UE_LOG(LogTemp, Warning, TEXT("Took Damage in Base Enemy"));
+	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in Base Enemy"));
 
 	return 0.0f;
 }
