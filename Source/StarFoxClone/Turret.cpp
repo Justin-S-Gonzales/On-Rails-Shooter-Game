@@ -26,6 +26,8 @@ void ATurret::BeginPlay()
 
 	// Shooting timer
 	GetWorldTimerManager().SetTimer(ShootingTimer, this, &ATurret::Fire, FireRate, true, 0.f);
+
+	RelativePickupSpawnPoint = FVector(0.0f, 0.0f, TurretPickupVerticalOffset);
 }
 
 void ATurret::Tick(float DeltaTime)

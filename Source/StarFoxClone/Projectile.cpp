@@ -4,6 +4,9 @@
 #include "Projectile.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Explosion.h"
+#include "PlayerShip.h"
+#include "Pickup.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -48,6 +51,20 @@ void AProjectile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	if (OtherActor->GetClass() == this->GetClass())
 	{
 		return;
+	}
+
+	if (Cast<AExplosion>(OtherActor) || Cast<APickup>(OtherActor))
+	{
+		return;
+	}
+
+	if (APlayerShip* Player = Cast<APlayerShip>(OtherActor))
+	{
+		if (Player->GetIsInvincible())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Is Invincible"));
+			return;
+		}
 	}
 
 	if (!ImpactParticles)

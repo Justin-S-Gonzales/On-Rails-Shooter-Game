@@ -53,6 +53,20 @@ protected:
 
 	FVector FromHereToPlayer = FVector(0.f);
 
+	FVector RelativePickupSpawnPoint = FVector(0.f);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Classes")
+	TSubclassOf<class ABombPickup> BombPickupClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Classes")
+	TSubclassOf<class AHealthPickup> HealthPickupClass;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* DeathSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* LaserSound;
+
 	virtual void Fire();
 
 public:	

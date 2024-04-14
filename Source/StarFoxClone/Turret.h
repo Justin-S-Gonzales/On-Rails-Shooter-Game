@@ -21,6 +21,9 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	UStaticMeshComponent* BaseMesh;
 
+	UPROPERTY(EditAnywhere, Category = "Pickup")
+	float TurretPickupVerticalOffset = 800.f;
+
 	void Fire();
 public:
 	ATurret();

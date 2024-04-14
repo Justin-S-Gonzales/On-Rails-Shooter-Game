@@ -18,6 +18,7 @@ class UHealthComponent;
 class AProjectile;
 class UParticleSystem;
 class UCameraShakeBase;
+class ABombProjectile;
 
 UCLASS()
 class STARFOXCLONE_API APlayerShip : public APawn
@@ -36,6 +37,9 @@ private:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	USceneComponent* RightProjectileSpawnPoint;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
+	USceneComponent* BombSpawnPoint;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components");
 	UHitFlash* HitFlashComp;
@@ -137,12 +141,21 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Collision")
 	bool bIsInvincible = false;
 
-	float CollisionInvincibilityTime = 3.0f;
+	float InvincibilityTime = 3.0f;
 
 	FTimerHandle InvincibleTimerHandle;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<AProjectile> ProjectileClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	TSubclassOf<ABombProjectile> BombClass;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	int32 BombCount = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float BombLaunchForwardImpulse = 5000.f;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float FireRate = 0.4f;
@@ -151,7 +164,16 @@ private:
 
 	bool bCanBomb = true;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	float BombTrajectoryPitchScaler = 0.5f;
+
 	FTimerHandle FireRateTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* LaserSound;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* DeathSound;
 
 public:
 	// Sets default values for this pawn's properties
@@ -179,6 +201,11 @@ public:
 	void UnFreezeMovement();
 	void SetInvincibilityToFalse();
 	void Die();
+
+	void AddHealth(float HealthAmount);
+	void AddBomb() { BombCount++; };
+
+	bool GetIsInvincible() { return bIsInvincible; };
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);

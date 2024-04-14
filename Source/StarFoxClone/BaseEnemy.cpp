@@ -7,9 +7,13 @@
 #include "HitFlash.h"
 #include "HealthComponent.h"
 #include "Projectile.h"
+#include "HealthPickup.h"
+#include "BombPickup.h"
 
 void ABaseEnemy::Fire()
 {
+	UGameplayStatics::PlaySoundAtLocation(this, LaserSound, GetActorLocation());
+
 	// Spawn lasers
 	GetWorld()->SpawnActor<AProjectile>(ProjectileClass, ProjectileSpawnPoint1->GetComponentLocation(), ProjectileSpawnPoint1->GetComponentRotation());
 }
@@ -80,6 +84,30 @@ void ABaseEnemy::Die()
 		GetActorRotation(),
 		DeathParticlesScale
 	);
+
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+
+	// Spawn random pickup
+	int32 RandNum = FMath::RandRange(0, 100);
+
+	if (RandNum >= 90 && RandNum <= 100)
+	{
+		AHealthPickup* SpawnedHealthPickup = GetWorld()->SpawnActor<AHealthPickup>(HealthPickupClass, GetActorLocation() + RelativePickupSpawnPoint, GetActorRotation());
+
+		if (!SpawnedHealthPickup)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Health pickup not spawned"));
+		}
+	}
+	if (RandNum >= 60 && RandNum <= 89)
+	{
+		ABombPickup* SpawnedBombPickup = GetWorld()->SpawnActor<ABombPickup>(BombPickupClass, GetActorLocation() + RelativePickupSpawnPoint, GetActorRotation());
+
+		if (!SpawnedBombPickup)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Bomb pickup not spawned"));
+		}
+	}
 
 	Destroy();
 }

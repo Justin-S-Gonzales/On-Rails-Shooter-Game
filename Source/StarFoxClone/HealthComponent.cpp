@@ -4,10 +4,20 @@
 #include "HealthComponent.h"
 #include "GM_StarFoxCloneGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlayerShip.h"
 
 void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
 	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in Health Component"));
+
+	/*if (APlayerShip* Player = Cast<APlayerShip>(DamagedActor))
+	{
+		if (Player->GetIsInvincible())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Is Invincible"));
+			return;
+		}
+	}*/
 
 	CurrentHealth -= Damage;
 
@@ -23,7 +33,10 @@ void UHealthComponent::OnTakeAnyDamage(AActor* DamagedActor, float Damage, const
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("%f health"), CurrentHealth);
+	if (Cast<APlayerShip>(DamagedActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%f health"), CurrentHealth);
+	}
 }
 
 // Sets default values for this component's properties
@@ -54,5 +67,12 @@ void UHealthComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UHealthComponent::AddHealth(float HealthAmount)
+{
+	CurrentHealth = FMath::Min(CurrentHealth + HealthAmount, MaxHealth);
+
+	UE_LOG(LogTemp, Warning, TEXT("%f health"), CurrentHealth);
 }
 

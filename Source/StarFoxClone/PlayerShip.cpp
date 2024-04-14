@@ -20,6 +20,9 @@
 #include "HealthComponent.h"
 #include "Particles/ParticleSystem.h"
 #include "Projectile.h"
+#include "BombProjectile.h"
+#include "Explosion.h"
+#include "Pickup.h"
 
 // Sets default values
 APlayerShip::APlayerShip()
@@ -41,6 +44,10 @@ APlayerShip::APlayerShip()
 	RightProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(
 		TEXT("Right Projectile Spawn Point"));
 	RightProjectileSpawnPoint->SetupAttachment(Mesh);
+
+	BombSpawnPoint = CreateDefaultSubobject<USceneComponent>(
+		TEXT("Bomb Spawn Point"));
+	BombSpawnPoint->SetupAttachment(Mesh);
 
 	HitFlashComp = CreateDefaultSubobject<UHitFlash>(TEXT("Hit Flash"));
 
@@ -354,6 +361,8 @@ void APlayerShip::Fire(const FInputActionValue& Value)
 		return;
 	}
 
+	UGameplayStatics::PlaySoundAtLocation(this, LaserSound, GetActorLocation());
+
 	// Spawn lasers
 	AProjectile* RightProjectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, RightProjectileSpawnPoint->GetComponentLocation(), RightProjectileSpawnPoint->GetComponentRotation());
 
@@ -371,9 +380,29 @@ void APlayerShip::Bomb(const FInputActionValue& Value)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("bomb"));
+	if (BombCount <= 0)
+	{
+		return;
+	}
+
+	BombCount--;
+
+	// UE_LOG(LogTemp, Warning, TEXT("bomb"));
+
+	ABombProjectile* Bomb = GetWorld()->SpawnActor<ABombProjectile>(BombClass, BombSpawnPoint->GetComponentLocation(), BombSpawnPoint->GetComponentRotation());
 
 	bCanBomb = false;
+
+	if (!Bomb)
+	{
+		return;
+	}
+
+	Bomb->GetComponentByClass<UStaticMeshComponent>()->WakeRigidBody();
+
+	FVector BombLaunchVector = FRotator(Mesh->GetComponentRotation().Pitch * BombTrajectoryPitchScaler, Mesh->GetComponentRotation().Yaw, 0.f).Vector();
+
+	Bomb->GetComponentByClass<UStaticMeshComponent>()->AddImpulse(BombLaunchVector * BombLaunchForwardImpulse, NAME_None, true);
 }
 
 void APlayerShip::ResetBombability()
@@ -399,11 +428,28 @@ void APlayerShip::Die()
 		DeathParticlesScale
 	);
 
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation());
+
 	Destroy();
+}
+
+void APlayerShip::AddHealth(float HealthAmount)
+{
+	HealthComp->AddHealth(HealthAmount);
 }
 
 void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (Cast<AExplosion>(OtherActor))
+	{
+		return;
+	}
+
+	if (Cast<APickup>(OtherActor))
+	{
+		return;
+	}
+
 	// UE_LOG(LogTemp, Warning, TEXT("Overlapping!"));
 	// Send player in opposite direction at knockback speed
 	FVector MiddleOfScreen = StartLocation.ProjectOnTo(GetActorRightVector()) + StartLocation.ProjectOnTo(GetActorUpVector()) + GetActorLocation().ProjectOnTo(GetActorForwardVector());
@@ -433,13 +479,18 @@ void APlayerShip::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 		return;
 	}
 
-	FDamageEvent damageEvent;
-	TakeDamage(CollisionOverlapDamage, damageEvent, nullptr, OtherActor);
-
 	// Set invincibility to true
 	bIsInvincible = true;
 
-	GetWorldTimerManager().SetTimer(InvincibleTimerHandle, this, &APlayerShip::SetInvincibilityToFalse, CollisionInvincibilityTime / 2.0f, false, CollisionInvincibilityTime / 2.0f);
+	GetWorldTimerManager().SetTimer(InvincibleTimerHandle, this, &APlayerShip::SetInvincibilityToFalse, InvincibilityTime / 2.0f, false, InvincibilityTime / 2.0f);
+
+	if (Cast<AProjectile>(OtherActor))
+	{
+		return;
+	}
+
+	FDamageEvent damageEvent;
+	TakeDamage(CollisionOverlapDamage, damageEvent, nullptr, OtherActor);
 }
 
 float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
