@@ -175,6 +175,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* DeathSound;
 
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* GotHitSound;
+
 public:
 	// Sets default values for this pawn's properties
 	APlayerShip();

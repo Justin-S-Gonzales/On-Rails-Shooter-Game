@@ -92,7 +92,7 @@ void ABaseEnemy::Die()
 
 	if (RandNum >= 90 && RandNum <= 100)
 	{
-		AHealthPickup* SpawnedHealthPickup = GetWorld()->SpawnActor<AHealthPickup>(HealthPickupClass, GetActorLocation() + RelativePickupSpawnPoint, GetActorRotation());
+		AHealthPickup* SpawnedHealthPickup = GetWorld()->SpawnActor<AHealthPickup>(HealthPickupClass, GetActorLocation() + RelativePickupSpawnPoint, FRotator(0.f));
 
 		if (!SpawnedHealthPickup)
 		{
@@ -101,7 +101,7 @@ void ABaseEnemy::Die()
 	}
 	if (RandNum >= 60 && RandNum <= 89)
 	{
-		ABombPickup* SpawnedBombPickup = GetWorld()->SpawnActor<ABombPickup>(BombPickupClass, GetActorLocation() + RelativePickupSpawnPoint, GetActorRotation());
+		ABombPickup* SpawnedBombPickup = GetWorld()->SpawnActor<ABombPickup>(BombPickupClass, GetActorLocation() + RelativePickupSpawnPoint, FRotator(0.f));
 
 		if (!SpawnedBombPickup)
 		{
@@ -117,6 +117,8 @@ float ABaseEnemy::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
 	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in Base Enemy"));
+
+	UGameplayStatics::PlaySoundAtLocation(this, GotHitSound, GetActorLocation());
 
 	return 0.0f;
 }

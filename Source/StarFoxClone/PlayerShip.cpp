@@ -497,6 +497,8 @@ float APlayerShip::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
+	UGameplayStatics::PlaySoundAtLocation(this, GotHitSound, GetActorLocation());
+
 	// UE_LOG(LogTemp, Warning, TEXT("Took Damage in player ship"));
 
 	return 0.0f;

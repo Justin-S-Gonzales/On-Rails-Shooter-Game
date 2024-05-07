@@ -67,6 +67,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundBase* LaserSound;
 
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundBase* GotHitSound;
+
 	virtual void Fire();
 
 public:	
